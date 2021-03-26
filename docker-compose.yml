@@ -1,0 +1,47 @@
+version: '3'
+services:
+  clickhouse:
+    image: yandex/clickhouse-server
+    container_name: ck
+    ports:
+      # httpリクエスト使うport
+      - 8123:8123
+      # クライアントport
+      - 9000:9000
+    volumes:
+      - type: bind
+        source: "./database"
+        target: "/var/lib/clickhouse"
+      - type: bind
+        source: "./config/clickhouse-config.xml"
+        target: "/etc/clickhouse-server/config.xml"
+      - type: bind
+        source: "./config/users.xml"
+        target: "/etc/clickhouse-server/users.xml"
+    networks:
+      clickhouse-net:
+        aliases:
+          - clickhouse.local.me
+
+  houseclient:
+    build: ./houseclient
+    container_name: hc
+    command: "tail -f /dev/null"
+    networks:
+      clickhouse-net:
+        aliases:
+          - houseclient.local.me
+
+  tabix:
+    image: spoonest/clickhouse-tabix-web-client
+    container_name: tb
+    ports:
+      - 8888:80
+    networks:
+      clickhouse-net:
+        aliases:
+          - houseclient.local.me
+
+
+networks:
+  clickhouse-net:
